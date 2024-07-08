@@ -10,3 +10,12 @@ db.sqlite
 .env.*
 ! .env.example
 .vscode
+Resources/**
+Scripts/CreateCerts/*.key
+Scripts/CreateCerts/*.crt
+Scripts/CreateCerts/*.csr
+Scripts/CreateCerts/*.p12
+Scripts/CreateCerts/*.cnf-e
+Scripts/CreateCerts/*.srl
+device.plist
+action_executed.flag
