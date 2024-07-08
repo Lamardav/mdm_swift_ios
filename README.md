@@ -4,20 +4,23 @@
 
 - Apple Configurator
 - Swift 5.10 и выше
-- Mac OS
+- Mac OS Ventura или выше
 - Включенный MDM CSR сертификат в Apple Developer Account
 - Python 3 для 1-го этапа (создания необходимых сертификатов для получения MDM Push)
-- OpenSSL command line
+- OpenSSL Сommand Line
 
 ## Создание Apple MDM Push Certificate
 
 1. Для начала необходимо сгенерировать запрос сертификата. Инструкция как это сделать [тут]("https://developer.apple.com/help/account/create-certificates/create-a-certificate-signing-request/:). Лучше всего генерировать все сертификаты одной подписью. Можно воспользоваться нашим из Google Drive:
+
 ![img.png](Docs/Images/img.png)
 
 2. Сгенерировать MDM CSR. Называться он скорее всего будет **mdm.cer**
+
 ![img.png](Docs/Images/img2.png)
 
 3. Открыть **mdm.cer** в связке ключей. Правой кнопкой на закрытом ключе открытого сертификата (на примере "shpakov") и сохранить его как **private.p12**
+
 ![img.png](Docs/Images/img3.png)
 
 4. Извлеките приватный ключ из нашего private.p12 ключа:
@@ -166,6 +169,17 @@ PushCert.pem и mdm.p12 перенесите в Resources/Certs
 
 Для запроса GET /enroll мы просто с сервера возвращаем наш "enroll.mobileconfig" файл (который заранее положили в Resources/Certs)
 
+```swift
+@Sendable
+    func enrollHandler(req: Request) async throws -> Response {
+        guard let fileData = FileManager.default.contents(atPath: EnrollController.enrollConfigPath) else {
+            throw Abort(.notFound)
+        }
+        
+        return Response(status: .ok, headers: ["Content-Type": "application/x-apple-aspen-config"], body: .init(data: fileData))
+    }
+```
+
 После запуска сервера, на мобильном устройстве можно перейти по адресу https://your_host:8080/enroll
 
 
@@ -190,15 +204,16 @@ PushCert.pem и mdm.p12 перенесите в Resources/Certs
 
 В данном проекте GET /magic - просто урл для вызова пуша на устройство. 
 
-Важно, чтобы пуш был подписан нашим PushCert.pem или mdm.p12 ключом.
+Важно, чтобы пуш был подписан нашим PushCert.pem или mdm.p12 ключом. В проекте мы используем PEM вариант.
 
 ![img.png](Docs/Images/img12.png)
 
-В проекте мы используем PEM вариант. В payload пуша необходимо передать обьект с ключом mdm и значением - MagicPush.
+В payload пуша необходимо передать обьект с ключом mdm и значением - MagicPush.
 
 **Важно!** Token перед отправкой необходимо переконвертиовать в 64-хзначный HEX
 
-       guard let deviceTokenData = deviceCheckIn.Token else {
+```swift
+guard let deviceTokenData = deviceCheckIn.Token else {
            throw Abort(.internalServerError, reason: "Token is nil")
         }
         
@@ -221,10 +236,11 @@ PushCert.pem и mdm.p12 перенесите в Resources/Certs
             alert,
             deviceToken: deviceTokenHex
         )
+   ```
 
 ## /action
 
-Стоит обратить внимание, что в пуше мы никакого контента, кроме {mdm: PushMagic} не передали. Мы пушом только говорим устройству, что у нас есть команда для телефона. Когда телефон сможет (когда будет в зоне действия интернета), он отправит XML со своим статусом на наш /action endpoint. В ответ ему необходимо будет вернуть нужную команду в виде XML в виде строки
+Стоит обратить внимание, что в пуше мы никакого контента, кроме {mdm: PushMagic} не передали. Мы пушом только говорим устройству, что у нас есть команда для телефона. Когда телефон сможет (когда будет в зоне действия интернета), он отправит XML со своим статусом на наш **/action** endpoint. В ответ ему необходимо будет вернуть нужную команду в виде XML в виде строки
 
 
 ## Примеры MDM команд:
@@ -297,3 +313,4 @@ PushCert.pem и mdm.p12 перенесите в Resources/Certs
 В качестве Identifier берем тот же identifier, что мы указавали в Apple Configurator
 
 Стоит отметить, что вместе с удалением профиля, удалятся и все Managed приложение и данные этого устройства
+
