@@ -19,3 +19,4 @@ Scripts/CreateCerts/*.cnf-e
 Scripts/CreateCerts/*.srl
 device.plist
 action_executed.flag
+.idea/
